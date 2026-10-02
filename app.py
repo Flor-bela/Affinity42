@@ -31,21 +31,33 @@ def callback():
         if user_response.status_code == 200:
             user_data = user_response.json()
             
-            profile_summary = {
-                "login": user_data.get("login"),
-                "location": user_data.get("location"),
-                "image": user_data.get("image", {}).get("link"),
-                "validated_projects": [
-                    {
-                        "name": p["project"]["name"],
-                        "final_mark": p.get("final_mark")
-                    }
-                    for p in user_data.get("projects_users", [])
-                    if p.get("validated?") is True
-                ]
+            other_login = "ikulik"
+            other_response = requests.get(f'https://api.intra.42.fr/v2/users/{other_login}', headers=headers)
+
+            other_data = other_response.json() if other_response.status_code == 200 else {}
+            
+            response_data = {
+                "my_profile": {
+                    "login": user_data.get("login"),
+                    "location": user_data.get("location"),
+                    "validated_projects": [
+                        {"name": p["project"]["name"], "final_mark": p.get("final_mark")}
+                        for p in user_data.get("projects_users", [])
+                        if p.get("validated?") is True
+                    ]
+                },
+                "other_profile": {
+                    "login": other_data.get("login"),
+                    "location": other_data.get("location"),
+                    "validated_projects": [
+                        {"name": p["project"]["name"], "final_mark": p.get("final_mark")}
+                        for p in other_data.get("projects_users", [])
+                        if p.get("validated?") is True
+                    ]
+                }
             }
             
-            return profile_summary
+            return response_data
         
         return "Fallo al obtener los datos del perfil", 500
         
