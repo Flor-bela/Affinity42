@@ -1,0 +1,30 @@
+[
+    {
+        "login": "alice",
+        "displayname": "Alice Martin",
+        "projects": [
+            {
+                "name": "libft",
+                "validated_at": "2026-09-28"
+            },
+            {
+                "name": "minishell",
+                "validated_at": "2026-09-15"
+            }
+        ]
+    },
+    {
+        "login": "bob",
+        "displayname": "Bob Garcia",
+        "projects": [
+            {
+                "name": "push_swap",
+                "validated_at": "2026-09-30"
+            },
+            {
+                "name": "minishell",
+                "validated_at": "2026-09-20"
+            }
+        ]
+    }
+]
