@@ -40,9 +40,7 @@ def calcular_afinidad(perfil_a, perfil_b):
 def login():
     uid = os.getenv('UID')
     redirect_uri = 'http://localhost:3000/callback'
-    
     url_autorizacion = f"https://api.intra.42.fr/oauth/authorize?client_id={uid}&redirect_uri={redirect_uri}&response_type=code"
-    
     return redirect(url_autorizacion)
 
 @app.route('/callback')
@@ -63,17 +61,15 @@ def callback():
     
     if response.status_code == 200:
         token = response.json().get('access_token')
-        
         headers = {'Authorization': f'Bearer {token}'}
+        
         user_response = requests.get('https://api.intra.42.fr/v2/me', headers=headers)
         
         if user_response.status_code == 200:
             user_data = user_response.json()
             
-            other_login = "ikulik"
-            other_response = requests.get(f'https://api.intra.42.fr/v2/users/{other_login}', headers=headers)
-
-            other_data = other_response.json() if other_response.status_code == 200 else {}
+            # Madrid id 22?? 
+            campus_id = 22 
             
             perfil_a = {
                 "login": user_data.get("login"),
@@ -83,25 +79,55 @@ def callback():
                     if p.get("validated?") is True
                 ]
             }
+
+
+            locations_url = f'https://api.intra.42.fr/v2/campus/{campus_id}/locations?filter[active]=true'
+            locations_response = requests.get(locations_url, headers=headers)
             
-            perfil_b = {
-                "login": other_data.get("login"),
-                "validated_projects": [
-                    {"name": p["project"]["name"], "final_mark": p.get("final_mark"), "marked_at": p.get("marked_at")}
-                    for p in other_data.get("projects_users", [])
-                    if p.get("validated?") is True
-                ]
+            if locations_response.status_code != 200:
+                return f"Fallo al obtener ubicaciones del campus: {locations_response.text}", 500
+                
+            active_locations = locations_response.json()
+            resultados = []
+
+            for loc in active_locations[:5]: # solo 5 por ahora
+                other_login = loc['user']['login']
+                
+                if other_login == perfil_a["login"]:
+                    continue
+
+                other_response = requests.get(f'https://api.intra.42.fr/v2/users/{other_login}', headers=headers)
+                
+                if other_response.status_code == 200:
+                    other_data = other_response.json()
+                    
+                    # grade: cadete
+                    es_cadete = any(c.get("cursus", {}).get("id") == 21 for c in other_data.get("cursus_users", []))
+                    if not es_cadete:
+                        continue
+                    
+                    perfil_b = {
+                        "login": other_login,
+                        "validated_projects": [
+                            {"name": p["project"]["name"], "final_mark": p.get("final_mark"), "marked_at": p.get("marked_at")}
+                            for p in other_data.get("projects_users", [])
+                            if p.get("validated?") is True
+                        ]
+                    }
+                    
+                    afinidad = calcular_afinidad(perfil_a, perfil_b)
+                    
+                    resultados.append({
+                        "usuario": other_login,
+                        "puesto": loc.get('host'),
+                        "afinidad": afinidad
+                    })
+            
+            return {
+                "mi_perfil": perfil_a["login"],
+                "campus_usado": campus_id,
+                "resultados_afinidad": resultados
             }
-            
-            afinidad = calcular_afinidad(perfil_a, perfil_b)
-            
-            response_data = {
-                "my_profile": perfil_a,
-                "other_profile": perfil_b,
-                "affinity_result": afinidad
-            }
-            
-            return response_data
         
         return "Fallo al obtener los datos del perfil", 500
         
