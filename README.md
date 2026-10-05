@@ -1,6 +1,6 @@
 # Affinity42
 
-logins: (añadir nuestros log ins aqui :))
+logins: durisosa dstanimi luolivei fda-roch
 
 Affinity42 is a hackathon project (Hackathon 42442) that visualises real-time affinity between students currently active on campus. It compares completed projects to highlight similarities between peers.
 

@@ -1,6 +1,5 @@
 import os
 import requests
-from flask import Flask, request
 from flask import Flask, request, redirect
 from dotenv import load_dotenv
 from datetime import datetime
