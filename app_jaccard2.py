@@ -76,7 +76,7 @@ def callback():
                 "validated_projects": [
                     {"name": p["project"]["name"], "final_mark": p.get("final_mark"), "marked_at": p.get("marked_at")}
                     for p in user_data.get("projects_users", [])
-                    if p.get("validated?") is True
+                    if p.get("validated?") is True and 21 in p.get("cursus_ids", [])
                 ]
             }
 
