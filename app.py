@@ -52,7 +52,7 @@ if "user_token" not in st.session_state:
 
 if "user_token" not in st.session_state:
     st.title("🤝 Affinity42")
-    st.caption("Active Madrid campus alumni ranked by project affinity.")
+    st.caption("Active Madrid campus ranked by affinity.")
     st.write("Please log in with your 42 Intra account to view campus affinity scores.")
 
     auth_url = get_authorization_url()
@@ -63,7 +63,7 @@ if "user_token" not in st.session_state:
 # --- App Execution (Logged In) ---
 
 st.title("🤝 Affinity42")
-st.caption("Active Madrid campus alumni ranked by project affinity.")
+st.caption("Active Madrid campus ranked by affinity.")
 
 # Fetch active campus peers with populated project lists
 peers = fetch_campus_peers(use_fake=False)
@@ -83,7 +83,7 @@ for pu in user.get("projects_users", []):
 
 st.sidebar.write(f"**Your Student Projects ({len(user_projects)}):**")
 for proj in user_projects:
-    st.sidebar.info(f"🏷️ `{proj['name']}`")
+    st.sidebar.info(f"⚪ `{proj['name']}`")
 
 # Process & Rank Peers
 ranked_peers = []
