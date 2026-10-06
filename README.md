@@ -58,10 +58,15 @@ $$\text{Final Index} = (\text{Jaccard Index} + \text{Total Bonus Time}) \times 1
 ---
 ### 4. Setup & Installation
 Follow these instructions to set up and run the project locally.
-Prerequisites
-Python 3.9+
-42 API Credentials (`CLIENT_ID` and `CLIENT_SECRET`)
-Installation Steps
+
+**Prerequisites**:
+
+`Python 3.9+`
+
+``42 API Credentials (`UID` and `SECRET`)``
+
+**Installation Steps**
+
 Clone the repository:
 ```bash
    git clone https://github.com/Flor-bela/Affinity42
@@ -80,8 +85,8 @@ Make sure you have the `requirements.txt` file which should include `streamlit`,
 Environment Variables:
 Create a `.env` file in the root directory and add your 42 API credentials:
 ```env
-   UID_42=your_client_id_here
-   SECRET_42=your_client_secret_here
+   UID = "your_client_id_here"
+   SECRET = "your_client_secret_here"
    ```
 Run the Application:
 ```bash
