@@ -78,12 +78,13 @@ Run the Application:
    streamlit run app.py
    ```
 The app will automatically open in your default web browser (usually at `http://localhost:8501`).
+
 ---
 5. Technical Challenges
 
 42 API Rate Limits:
 Problem: Extracting data for all Cadets in Campus Madrid triggered the API's rate limits (requests per second/hour), causing timeouts.
-Solution: We implemented a pagination delay (sleep functions) and cached the responses locally during the development phase to minimize API calls.
+Solution: We implemented a delay (sleep functions) with import time.
 Data Filtering Complexity:
 Problem: Separating Piscine projects from core Cursus projects (code: 21) for each user was returning overlapping data arrays.
 Solution: We built a strict filtering function before calculating the Jaccard index, ensuring only projects with `cursus_id == 21` (or the equivalent core cursus ID) were appended to the user's completed list.
