@@ -4,15 +4,16 @@ Affinity42 🤝 (Project for Hackathon 42442 (Liga Nexus), 42Madrid)
 
 ---
 
-1. Team, Roles, and Time Tracking
+### 1. Team, Roles, and Time Tracking
+| 42 Login | Team Member | Role & Responsibilities | Hours Invested |
 
-Below is the breakdown of the 42 students involved, their responsibilities, and the work memory (hours invested per participant) We were also all involved in the idealisation of the project since the first day.
-42 Login	Team Member	Role & Responsibilities	Hours Invested
-dstanimi	Dobrin	Frontend. Streamlit architecture, API integration and user interface implementation.	`[XX]` hours
-durisosa	Durian	Backend & Data. API integration, and organization.	`[XX]` hours
-fda-roch	Flor	Backend & Data. Algorithm design (Affinity Index), API requests, and data structuring.	`[XX]` hours
-luolivei	Lucas	Frontend & Presentation. Visuals, UI support, and project pitching (PPT).	`[XX]` hours
+| `dstanimi` | Dobrin | Frontend. Streamlit architecture, API integration and user interface implementation. | `[XX]` hours |
+| `durisosa` | Durian | Backend & Data. API integration, and organization. | `[XX]` hours |
+| `fda-roch` | Flor | Backend & Data. Algorithm design (Affinity Index), API requests, and data structuring. | `[XX]` hours |
+| `luolivei` | Lucas | Frontend & Presentation. Visuals, UI support, and project pitching (PPT). | `[XX]` hours |
 
+
+---
 Project Management:
 
 Ideation & Prototyping: Brainstorming sessions to define the "problem" we wanted to solve and the core metric (Affinity Index).
@@ -22,13 +23,16 @@ Task Delegation: Tasks were split between Frontend (Data Visualization) and Back
 Version Control & Communication: Coordinated via GitHub for code integration and real-time communication.
 
 ---
-2. The Problem & Our Solution
+### 2. The Problem & Our Solution
+
 The "Pain Point"
+
 At 42, choosing the right group for projects (like minishell, cub3d, etc.) is critical for success. However, students often struggle to find partners who share similar knowledge levels, work paces, and availability. Picking a partner randomly or based solely on friendship can lead to uneven workloads or scheduling conflicts.
 The Solution: Affinity42
 We built a web application that calculates a compatibility score between students. By filtering campus data (specifically Campus Madrid - code 22) and isolating active Cadets (excluding Piscine projects - code 21), we generate an accurate affinity matrix. This allows students to make data-driven decisions when forming teams, ensuring smoother collaboration.
+
 ---
-3. How the Affinity Index Works
+### 3. How the Affinity Index Works
 The core of our application is the Affinity Index, calculated using two main factors:
 1. The Jaccard Index
 We use the Jaccard similarity coefficient to measure the intersection of completed projects between two students.
@@ -36,6 +40,7 @@ $$J(A,B) = \frac{|A \cap B|}{|A \cup B|}$$
 
 (Number of common projects / Total unique projects between both students)
 ![Jaccard Similarity](https://storage.googleapis.com/lds-media/images/jaccard_similarity.width-1200.jpg)
+
 2. The "Bonus Time" Metric
 Having the same projects is good, but having done them recently means the knowledge is fresh.
 If both students finished a common project within 30 days of each other (<= 30 days difference), we add a 0.05 bonus to their index for that project.
@@ -46,7 +51,7 @@ $$\text{Final Index} = (\text{Jaccard Index} + \text{Total Bonus Time}) \times 1
 -> Note: The maximum possible Affinity Index is capped at 100%, regardless of how many time bonuses are applied.
 
 ---
-4. Setup & Installation
+### 4. Setup & Installation
 Follow these instructions to set up and run the project locally.
 Prerequisites
 Python 3.9+
@@ -80,14 +85,19 @@ Run the Application:
 The app will automatically open in your default web browser (usually at `http://localhost:8501`).
 
 ---
-5. Technical Challenges
+### 5. Technical Challenges
 
 42 API Rate Limits:
-Problem: Extracting data for all Cadets in Campus Madrid triggered the API's rate limits (requests per second/hour), causing timeouts.
+- Problem: Extracting data for all Cadets in Campus Madrid triggered the API's rate limits (requests per second/hour), causing timeouts.
+
 Solution: We implemented a delay (sleep functions) with import time.
+
 Data Filtering Complexity:
-Problem: Separating Piscine projects from core Cursus projects (code: 21) for each user was returning overlapping data arrays.
+- Problem: Separating Piscine projects from core Cursus projects (code: 21) for each user was returning overlapping data arrays.
+
 Solution: We built a strict filtering function before calculating the Jaccard index, ensuring only projects with `cursus_id == 21` (or the equivalent core cursus ID) were appended to the user's completed list.
+
 Streamlit State Management:
-Problem: The app re-ran the entire script and API calls every time a user clicked a button or adjusted a filter, making it very slow.
+- Problem: The app re-ran the entire script and API calls every time a user clicked a button or adjusted a filter, making it very slow.
+
 Solution: We utilized Streamlit's `@st.cache_data` decorator to cache the heavy API payload and the Affinity Matrix calculation.
