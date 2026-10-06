@@ -1,0 +1,8 @@
+{
+    "login": "charlie",
+    "displayname": "Charlie Smith",
+    "current_projects": [
+        "minishell",
+        "push_swap"
+    ]
+}
