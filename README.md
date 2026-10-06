@@ -7,10 +7,10 @@ Affinity42 🤝 (Project for Hackathon 42442 (Liga Nexus), 42Madrid)
 ### 1. Team, Roles, and Time Tracking
 | 42 Login | Team Member | Role & Responsibilities | Hours Invested |
 | -------- | ----------- | ----------------------- | -------------- |
-| `dstanimi` | Dobrin | Frontend. Streamlit architecture, API integration and user interface implementation. | `[XX]` hours |
-| `durisosa` | Durian | Backend & Data. API integration, and organization. | `[XX]` hours |
-| `fda-roch` | Flor | Backend & Data. Algorithm design (Affinity Index), API requests, and data structuring. | `[XX]` hours |
-| `luolivei` | Lucas | Frontend & Presentation. Visuals, UI support, and project pitching (PPT). | `[XX]` hours |
+| `dstanimi` | Dobrin | Frontend. Streamlit architecture, API integration and user interface implementation. | `16` hours |
+| `durisosa` | Durian | Backend & Data. API integration, and organization. | `12` hours |
+| `fda-roch` | Flor | Backend & Data. Algorithm design (Affinity Index), API requests, and data structuring. | `16` hours |
+| `luolivei` | Lucas | Frontend & Presentation. Visuals, UI support, and project pitching (PPT). | `12` hours |
 
 
 ---
