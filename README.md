@@ -14,41 +14,46 @@ Affinity42 🤝 (Project for Hackathon 42442 (Liga Nexus), 42Madrid)
 
 
 ---
-Project Management:
+#### Project Management:
 
-Ideation & Prototyping: Brainstorming sessions to define the "problem" we wanted to solve and the core metric (Affinity Index).
+- **Ideation & Prototyping**: Brainstorming sessions to define the "problem" we wanted to solve and the core metric (Affinity Index).
 
-Task Delegation: Tasks were split between Frontend (Data Visualization) and Backend (Data Gathering & Processing) to allow parallel work, but we all contributed with the ideas for the whole projects.
+- **Task Delegation**: Tasks were split between Frontend (Data Visualization) and Backend (Data Gathering & Processing) to allow parallel work, but we all contributed with the ideas for the whole projects.
 
-Version Control & Communication: Coordinated via GitHub for code integration and real-time communication.
+- **Version Control & Communication**: Coordinated via GitHub for code integration and real-time communication.
 
 ---
 ### 2. The Problem & Our Solution
 
-The "Pain Point"
+**The "Pain Point"**
 
 At 42, choosing the right group for projects (like minishell, cub3d, etc.) is critical for success. However, students often struggle to find partners who share similar knowledge levels, work paces, and availability. Picking a partner randomly or based solely on friendship can lead to uneven workloads or scheduling conflicts.
-The Solution: Affinity42
+
+**The Solution: Affinity42**
+
 We built a web application that calculates a compatibility score between students. By filtering campus data (specifically Campus Madrid - code 22) and isolating active Cadets (excluding Piscine projects - code 21), we generate an accurate affinity matrix. This allows students to make data-driven decisions when forming teams, ensuring smoother collaboration.
 
 ---
 ### 3. How the Affinity Index Works
 The core of our application is the Affinity Index, calculated using two main factors:
-1. The Jaccard Index
+
+**1. The Jaccard Index**
+
 We use the Jaccard similarity coefficient to measure the intersection of completed projects between two students.
 $$J(A,B) = \frac{|A \cap B|}{|A \cup B|}$$
 
 (Number of common projects / Total unique projects between both students)
 ![Jaccard Similarity](https://storage.googleapis.com/lds-media/images/jaccard_similarity.width-1200.jpg)
 
-2. The "Bonus Time" Metric
+**2. The "Bonus Time" Metric**
+
 Having the same projects is good, but having done them recently means the knowledge is fresh.
 If both students finished a common project within 30 days of each other (<= 30 days difference), we add a 0.05 bonus to their index for that project.
 Final Calculation
 The final affinity index is transformed into a percentage:
 $$\text{Final Index} = (\text{Jaccard Index} + \text{Total Bonus Time}) \times 100$$
 
--> Note: The maximum possible Affinity Index is capped at 100%, regardless of how many time bonuses are applied.
+> **_NOTE:_** The maximum possible Affinity Index is capped at 100%, regardless of how many time bonuses are applied.
 
 ---
 ### 4. Setup & Installation
@@ -87,17 +92,17 @@ The app will automatically open in your default web browser (usually at `http://
 ---
 ### 5. Technical Challenges
 
-42 API Rate Limits:
-- Problem: Extracting data for all Cadets in Campus Madrid triggered the API's rate limits (requests per second/hour), causing timeouts.
+**42 API Rate Limits**:
+- **Problem**: Extracting data for all Cadets in Campus Madrid triggered the API's rate limits (requests per second/hour), causing timeouts.
 
-Solution: We implemented a delay (sleep functions) with import time.
+- **Solution**: We implemented a delay (sleep functions) with import time.
 
-Data Filtering Complexity:
-- Problem: Separating Piscine projects from core Cursus projects (code: 21) for each user was returning overlapping data arrays.
+**Data Filtering Complexity**:
+- **Problem**: Separating Piscine projects from core Cursus projects (code: 21) for each user was returning overlapping data arrays.
 
-Solution: We built a strict filtering function before calculating the Jaccard index, ensuring only projects with `cursus_id == 21` (or the equivalent core cursus ID) were appended to the user's completed list.
+- **Solution**: We built a strict filtering function before calculating the Jaccard index, ensuring only projects with `cursus_id == 21` (or the equivalent core cursus ID) were appended to the user's completed list.
 
-Streamlit State Management:
-- Problem: The app re-ran the entire script and API calls every time a user clicked a button or adjusted a filter, making it very slow.
+**Streamlit State Management**:
+- **Problem**: The app re-ran the entire script and API calls every time a user clicked a button or adjusted a filter, making it very slow.
 
-Solution: We utilized Streamlit's `@st.cache_data` decorator to cache the heavy API payload and the Affinity Matrix calculation.
+- **Solution**: We utilized Streamlit's `@st.cache_data` decorator to cache the heavy API payload and the Affinity Matrix calculation.
