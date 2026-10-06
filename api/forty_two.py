@@ -4,8 +4,8 @@ import time
 import urllib.parse
 import requests
 from dotenv import load_dotenv
+import streamlit as st
 
-# Load credentials from .env file
 load_dotenv()
 
 CLIENT_ID = os.getenv("UID")
@@ -105,9 +105,10 @@ def fetch_logged_in_user(use_fake: bool = False, user_token: str = None) -> dict
     res = _rate_limited_request("GET", "https://api.intra.42.fr/v2/me", headers=headers, timeout=10)
     return res.json()
 
+# para evitar tener que hacer más peticiones con la API
+@st.cache_data(ttl=300)
 
 def fetch_campus_peers(use_fake: bool = False) -> list[dict]:
-    """Fetch active 42 Madrid peers logged into workstation hosts and populate project history."""
     if use_fake:
         with open("tests/fake_data.json", "r") as f:
             return json.load(f)
@@ -115,7 +116,8 @@ def fetch_campus_peers(use_fake: bool = False) -> list[dict]:
     token = get_access_token()
     headers = {"Authorization": f"Bearer {token}"}
 
-    active_peers = []
+    # 1. Obtener usuarios activos
+    active_peers_dict = {}
     page = 1
     per_page = 100
 
@@ -129,54 +131,60 @@ def fetch_campus_peers(use_fake: bool = False) -> list[dict]:
 
         res = _rate_limited_request("GET", url, headers=headers, params=params, timeout=10)
         batch = res.json()
+        
+        if not batch:
+            break
 
         for loc in batch:
             user_data = loc.get("user", {})
-            user_id = user_data.get("id")
-            login = user_data.get("login")
-
-            if not user_id or not login:
-                continue
-
-            projects_data = []
-
-            # Fetch detailed user profile to access full projects_users array
-            try:
-                user_detail_res = _rate_limited_request(
-                    "GET",
-                    f"https://api.intra.42.fr/v2/users/{user_id}",
-                    headers=headers,
-                    timeout=10,
-                )
-                full_user = user_detail_res.json()
-
-                for pu in full_user.get("projects_users", []):
-                    cursus_ids = pu.get("cursus_ids", [])
-                    p_obj = pu.get("project", {})
-                    p_name = p_obj.get("name") if isinstance(p_obj, dict) else str(p_obj)
-
-                    if 9 not in cursus_ids and p_name:
-                        p_lower = str(p_name).lower()
-                        if not (p_lower.startswith("c ") or p_lower.startswith("shell") or "piscine" in p_lower):
-                            projects_data.append({
-                                "name": p_name,
-                                "validated_at": pu.get("marked_at", "")[:10] if pu.get("marked_at") else None,
-                                "status": pu.get("status"),
-                            })
-            except Exception:
-                # Proceed with available data if user detail call fails
-                pass
-
-            active_peers.append({
-                "login": login,
-                "displayname": user_data.get("displayname", login),
-                "host": loc.get("host", "f1r2p3"),
-                "projects": projects_data,
-            })
+            uid = user_data.get("id")
+            if uid:
+                active_peers_dict[uid] = {
+                    "login": user_data.get("login"),
+                    "displayname": user_data.get("displayname", user_data.get("login")),
+                    "host": loc.get("host", "f1r2p3"),
+                    "projects": []
+                }
 
         if len(batch) < per_page:
             break
-
         page += 1
 
-    return active_peers
+    # 2. Obtener proyectos de esos usuarios en bloques de 50 (como en tu Flask)
+    user_ids = list(active_peers_dict.keys())
+    chunk_size = 50
+
+    for i in range(0, len(user_ids), chunk_size):
+        chunk = user_ids[i:i + chunk_size]
+        ids_str = ",".join(map(str, chunk))
+        
+        p_page = 1
+        while True:
+            p_url = f"https://api.intra.42.fr/v2/projects_users"
+            p_params = {
+                "filter[user_id]": ids_str,
+                "page[size]": 100,
+                "page[number]": p_page
+            }
+            
+            p_res = _rate_limited_request("GET", p_url, headers=headers, params=p_params, timeout=10)
+            p_data = p_res.json()
+            
+            if not p_data:
+                break
+                
+            for pu in p_data:
+                uid = pu.get("user", {}).get("id")
+                if uid in active_peers_dict:
+                    cursus = pu.get("cursus_ids", [])
+                    if 21 in cursus and pu.get("validated?") is True:
+                        proj_name = pu.get("project", {}).get("name")
+                        if proj_name:
+                            active_peers_dict[uid]["projects"].append({
+                                "name": proj_name,
+                                "marked_at": pu.get("marked_at")
+                            })
+                        
+            p_page += 1
+
+    return list(active_peers_dict.values())

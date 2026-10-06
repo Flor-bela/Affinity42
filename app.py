@@ -1,5 +1,4 @@
-import math
-from datetime import datetime, date
+from datetime import datetime
 import streamlit as st
 from api.forty_two import (
     fetch_logged_in_user,
@@ -10,90 +9,35 @@ from api.forty_two import (
 
 st.set_page_config(page_title="Affinity42", page_icon="⚡", layout="wide")
 
-# 42 Core Cursus Project Complexity Weights (1.0 to 3.0 scale)
-PROJECT_WEIGHTS = {
-    # Tier 1: Foundation
-    "libft": 1.0,
-    "ft_printf": 1.0,
-    "get_next_line": 1.0,
-    "born2beroot": 1.2,
+def calcular_afinidad(proyectos_lista_a, proyectos_lista_b):
+    proyectos_a = {p["name"]: p for p in proyectos_lista_a if p.get("name")}
+    proyectos_b = {p["name"]: p for p in proyectos_lista_b if p.get("name")}
     
-    # Tier 2: Intermediate
-    "so_long": 1.5,
-    "fdf": 1.5,
-    "fract-ol": 1.5,
-    "pipex": 1.8,
-    "push_swap": 1.8,
-    "minitalk": 1.8,
+    comunes = set(proyectos_a.keys()).intersection(set(proyectos_b.keys()))
     
-    # Tier 3: Core Milestones
-    "minishell": 2.5,
-    "philosophers": 2.2,
-    "cub3d": 2.5,
-    "miniRT": 2.5,
-    "netpractice": 1.8,
-    
-    # Tier 4: Advanced C++ & Systems
-    "cpp module 00": 1.2, "cpp module 01": 1.2, "cpp module 02": 1.2,
-    "cpp module 03": 1.2, "cpp module 04": 1.2, "cpp module 05": 1.5,
-    "cpp module 06": 1.5, "cpp module 07": 1.5, "cpp module 08": 1.8, "cpp module 09": 1.8,
-    "ft_containers": 2.5,
-    "webserv": 3.0,
-    "ft_irc": 2.8,
-    "ft_transcendence": 3.0,
-}
-
-
-def compute_affinity(user_projects: list[str], peer_projects: list[dict]) -> tuple[int, list[str]]:
-    """Calculates an improved affinity score based on project complexity, status, and recency."""
-    if not user_projects:
+    if not comunes:
         return 0, []
-
-    # Map normalized user project names
-    user_map = {p.strip().lower(): p for p in user_projects if p}
-    matching = []
-    accumulated_weight = 0.0
-    total_user_capacity = sum(PROJECT_WEIGHTS.get(p.strip().lower(), 1.5) for p in user_projects)
-
-    today = date.today()
-
-    for p in peer_projects:
-        p_name = p.get("name")
-        if not p_name:
-            continue
-
-        p_key = str(p_name).strip().lower()
-        if p_key in user_map:
-            matching.append(user_map[p_key])
-            
-            # Base weight for project complexity
-            base_weight = PROJECT_WEIGHTS.get(p_key, 1.5)
-            
-            # Recency multiplier for validated projects
-            recency_mult = 1.0
-            if p.get("validated_at"):
-                try:
-                    val_date = datetime.strptime(p["validated_at"], "%Y-%m-%d").date()
-                    days_ago = max(0, (today - val_date).days)
-                    # Decays over ~6 months down to a baseline of 0.5x
-                    recency_mult = 0.5 + (0.5 * (1 / (1 + days_ago / 180)))
-                except ValueError:
-                    recency_mult = 1.0
-
-            # Bonus if peer is actively working on the same project
-            status_bonus = 1.5 if p.get("status") == "in_progress" else 1.0
-
-            accumulated_weight += base_weight * recency_mult * status_bonus
-
-    if total_user_capacity == 0:
-        return 0, []
-
-    # Logarithmic scaling to prevent rapid saturation while keeping score 0-100%
-    raw_ratio = accumulated_weight / total_user_capacity
-    scaled_score = (math.log1p(raw_ratio) / math.log1p(2.0)) * 100.0
-
-    final_score = min(int(round(scaled_score)), 100)
-    return final_score, list(set(matching))
+        
+    todos = set(proyectos_a.keys()).union(set(proyectos_b.keys()))
+    indice_jaccard = len(comunes) / len(todos)
+    
+    bonus_tiempo = 0
+    for proj in comunes:
+        if proyectos_a[proj].get("marked_at") and proyectos_b[proj].get("marked_at"):
+            try:
+                # Recorte a 19 caracteres para evitar errores de parseo con la 'Z' y milisegundos
+                fecha_a = datetime.fromisoformat(str(proyectos_a[proj]["marked_at"]).replace('Z', '+00:00')[:19])
+                fecha_b = datetime.fromisoformat(str(proyectos_b[proj]["marked_at"]).replace('Z', '+00:00')[:19])
+                
+                diferencia_dias = abs((fecha_a - fecha_b).days)
+                if diferencia_dias <= 30:
+                    bonus_tiempo += 0.05
+            except (ValueError, TypeError):
+                pass
+                
+    afinidad_final = min((indice_jaccard + bonus_tiempo) * 100, 100)
+    
+    return round(afinidad_final, 2), list(comunes)
 
 
 # --- OAuth2 Session Authentication Flow ---
@@ -129,32 +73,34 @@ user = fetch_logged_in_user(use_fake=False, user_token=st.session_state["user_to
 st.sidebar.markdown(f"### 👤 {user.get('displayname', user.get('login'))}")
 st.sidebar.caption(f"@{user.get('login')}")
 
-# Extract user's student projects (excluding Piscine)
-raw_projects = user.get("projects_users", [])
+### 21 es el codigo de proyectos solo del cursus!!!
 user_projects = []
-
-for pu in raw_projects:
-    cursus_ids = pu.get("cursus_ids", [])
-    proj_obj = pu.get("project", {})
-    proj_name = proj_obj.get("name") if isinstance(proj_obj, dict) else str(pu)
-
-    if 9 not in cursus_ids and proj_name:
-        p_lower = str(proj_name).lower()
-        if not (p_lower.startswith("c ") or p_lower.startswith("shell") or "piscine" in p_lower):
-            user_projects.append(proj_name)
-
-# Fallback if profile uses current_projects key
-if not user_projects and "current_projects" in user:
-    user_projects = user.get("current_projects", [])
+for pu in user.get("projects_users", []):
+    if 21 in pu.get("cursus_ids", []) and pu.get("validated?") is True:
+        proj_name = pu.get("project", {}).get("name")
+        if proj_name:
+            user_projects.append({"name": proj_name, "marked_at": pu.get("marked_at")})
 
 st.sidebar.write(f"**Your Student Projects ({len(user_projects)}):**")
 for proj in user_projects:
-    st.sidebar.info(f"🏷️ `{proj}`")
+    st.sidebar.info(f"🏷️ `{proj['name']}`")
 
 # Process & Rank Peers
 ranked_peers = []
 for peer in peers:
-    score, matches = compute_affinity(user_projects, peer.get("projects", []))
+    peer_projects = []
+    for pu in peer.get("projects_users", peer.get("projects", [])):
+        cursus = pu.get("cursus_ids", [])
+        is_validated = pu.get("validated?", True)
+        
+        if not cursus or 21 in cursus:
+            if is_validated:
+                proj_name = pu.get("project", {}).get("name") or pu.get("name")
+                if proj_name:
+                    peer_projects.append({"name": proj_name, "marked_at": pu.get("marked_at")})
+
+    score, matches = calcular_afinidad(user_projects, peer_projects)
+    
     ranked_peers.append({
         "login": peer.get("login"),
         "displayname": peer.get("displayname", peer.get("login")),
