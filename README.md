@@ -111,3 +111,10 @@ The app will automatically open in your default web browser (usually at `http://
 - **Problem**: The app re-ran the entire script and API calls every time a user clicked a button or adjusted a filter, making it very slow.
 
 - **Solution**: We utilized Streamlit's `@st.cache_data` decorator to cache the heavy API payload and the Affinity Matrix calculation.
+
+---
+
+### 6. Useful links
+- https://profile.intra.42.fr/legal/terms/33
+- https://api.intra.42.fr/apidoc/guides/getting_started
+- https://api.intra.42.fr/apidoc/guides/web_application_flow
