@@ -5,6 +5,7 @@ import urllib.parse
 import requests
 from dotenv import load_dotenv
 
+# Load credentials from .env file
 load_dotenv()
 
 CLIENT_ID = os.getenv("UID")
@@ -106,7 +107,7 @@ def fetch_logged_in_user(use_fake: bool = False, user_token: str = None) -> dict
 
 
 def fetch_campus_peers(use_fake: bool = False) -> list[dict]:
-    """Fetch active 42 Madrid peers logged into workstation hosts."""
+    """Fetch active 42 Madrid peers logged into workstation hosts and populate project history."""
     if use_fake:
         with open("tests/fake_data.json", "r") as f:
             return json.load(f)
@@ -131,25 +132,44 @@ def fetch_campus_peers(use_fake: bool = False) -> list[dict]:
 
         for loc in batch:
             user_data = loc.get("user", {})
+            user_id = user_data.get("id")
+            login = user_data.get("login")
+
+            if not user_id or not login:
+                continue
+
             projects_data = []
 
-            # Extract student projects (excluding Piscine / Cursus ID 9)
-            for pu in user_data.get("projects_users", []):
-                cursus_ids = pu.get("cursus_ids", [])
-                p_name = pu.get("project", {}).get("name") if isinstance(pu.get("project"), dict) else pu.get("project")
+            # Fetch detailed user profile to access full projects_users array
+            try:
+                user_detail_res = _rate_limited_request(
+                    "GET",
+                    f"https://api.intra.42.fr/v2/users/{user_id}",
+                    headers=headers,
+                    timeout=10,
+                )
+                full_user = user_detail_res.json()
 
-                if 9 not in cursus_ids and p_name:
-                    p_lower = str(p_name).lower()
-                    if not (p_lower.startswith("c ") or p_lower.startswith("shell") or "piscine" in p_lower):
-                        projects_data.append({
-                            "name": p_name,
-                            "validated_at": pu.get("marked_at", "")[:10] if pu.get("marked_at") else None,
-                            "status": pu.get("status")
-                        })
+                for pu in full_user.get("projects_users", []):
+                    cursus_ids = pu.get("cursus_ids", [])
+                    p_obj = pu.get("project", {})
+                    p_name = p_obj.get("name") if isinstance(p_obj, dict) else str(p_obj)
+
+                    if 9 not in cursus_ids and p_name:
+                        p_lower = str(p_name).lower()
+                        if not (p_lower.startswith("c ") or p_lower.startswith("shell") or "piscine" in p_lower):
+                            projects_data.append({
+                                "name": p_name,
+                                "validated_at": pu.get("marked_at", "")[:10] if pu.get("marked_at") else None,
+                                "status": pu.get("status"),
+                            })
+            except Exception:
+                # Proceed with available data if user detail call fails
+                pass
 
             active_peers.append({
-                "login": user_data.get("login"),
-                "displayname": user_data.get("displayname", user_data.get("login")),
+                "login": login,
+                "displayname": user_data.get("displayname", login),
                 "host": loc.get("host", "f1r2p3"),
                 "projects": projects_data,
             })
