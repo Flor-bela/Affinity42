@@ -51,7 +51,7 @@ if "user_token" not in st.session_state:
         st.rerun()
 
 if "user_token" not in st.session_state:
-    st.title("⚡ Affinity42")
+    st.title("🤝 Affinity42")
     st.caption("Active Madrid campus alumni ranked by project affinity.")
     st.write("Please log in with your 42 Intra account to view campus affinity scores.")
 
@@ -62,7 +62,7 @@ if "user_token" not in st.session_state:
 
 # --- App Execution (Logged In) ---
 
-st.title("⚡ Affinity42")
+st.title("🤝 Affinity42")
 st.caption("Active Madrid campus alumni ranked by project affinity.")
 
 # Fetch active campus peers with populated project lists
