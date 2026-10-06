@@ -1,8 +1,15 @@
 # Affinity42
 
-logins: durisosa dstanimi luolivei fda-roch
+// to do:
+añadir horas
+traducir a inglés
+decir los requirements que tenemos que instalar
+añadir streamlit run app.py
+y otros requisitos necesarios para el readme!!!
 
-(traducirlo a inglés!!!)
+
+
+logins: durisosa dstanimi luolivei fda-roch
 
 Affinity42: estudiantes que sean más “afines” a nosotros; -> calcular y visualizar un Índice de Afinidad para identificar estudiantes con perfiles y ritmos de trabajo parecidos. El objetivo es encontrar compañeros compatibles para futuros proyectos en grupo basándonos en los proyectos completados y en cuando fueron terminados (para asegurar que los conocimientos estén "frescos"). 
 
