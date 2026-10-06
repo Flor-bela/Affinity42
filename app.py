@@ -7,7 +7,7 @@ from api.forty_two import (
     exchange_code_for_token,
 )
 
-st.set_page_config(page_title="Affinity42", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="Affinity42", page_icon="🤝", layout="wide")
 
 def calcular_afinidad(proyectos_lista_a, proyectos_lista_b):
     proyectos_a = {p["name"]: p for p in proyectos_lista_a if p.get("name")}
