@@ -19,6 +19,10 @@ Tener en cuenta: fechas de término de proyectos; fecha de inscripción en los p
 Índice de jaccard: 
 Nº de proyectos en común (intersección) / Nº total de proyectos únicos entre las dos personas que comparamos -> unión)
 
+// añadir esta imagen 
+https://storage.googleapis.com/lds-media/images/jaccard_similarity.width-1200.jpg
+
+
 “Bonus time”:
 Si hemos terminado los proyectos en menos de 30 días (<= 30) de diferencia, sumamos 0.05 al índice.
 

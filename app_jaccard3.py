@@ -1,8 +1,10 @@
 import os
 import requests
+import time
 from flask import Flask, request, redirect
 from dotenv import load_dotenv
 from datetime import datetime
+
 
 load_dotenv()
 app = Flask(__name__)
@@ -80,56 +82,92 @@ def callback():
                 ]
             }
 
-            locations_url = f'https://api.intra.42.fr/v2/campus/{campus_id}/locations?filter[active]=true'
-            locations_response = requests.get(locations_url, headers=headers)
-            
-            if locations_response.status_code != 200:
-                return f"Fallo al obtener ubicaciones del campus: {locations_response.text}", 500
-                
-            active_locations = locations_response.json()
-            resultados = []
 
-            for loc in active_locations[:10]: # solo 10 por ahora
-                other_login = loc['user']['login']
-                
-                if other_login == perfil_a["login"]:
+            active_locations = []
+            page = 1
+            while True:
+                loc_url = f'https://api.intra.42.fr/v2/campus/{campus_id}/locations?filter[active]=true&page[size]=100&page[number]={page}'
+                res = requests.get(loc_url, headers=headers)
+                if res.status_code != 200:
+                    break
+                data = res.json()
+                if not data:
+                    break
+                active_locations.extend(data)
+                page += 1
+                time.sleep(0.5) # Evitar Rate Limit de 42 (2 req/sec)
+
+
+            user_info = {}
+            for loc in active_locations:
+                uid = loc['user']['id']
+                login = loc['user']['login']
+                if login == perfil_a["login"]:
                     continue
+                user_info[uid] = {"login": login, "puesto": loc['host'], "projects": []}
 
-                other_response = requests.get(f'https://api.intra.42.fr/v2/users/{other_login}', headers=headers)
-                
-                if other_response.status_code == 200:
-                    other_data = other_response.json()
-                    
-                    # grade: cadete
-                    es_cadete = any(c.get("cursus", {}).get("id") == 21 for c in other_data.get("cursus_users", []))
-                    if not es_cadete:
-                        continue
-                    
-                    perfil_b = {
-                        "login": other_login,
-                        "validated_projects": [
-                            {"name": p["project"]["name"], "final_mark": p.get("final_mark"), "marked_at": p.get("marked_at")}
-                            for p in other_data.get("projects_users", [])
-                            if p.get("validated?") is True
-                        ]
-                    }
-                    
-                    afinidad = calcular_afinidad(perfil_a, perfil_b)
-                    
-                    resultados.append({
-                        "usuario": other_login,
-                        "puesto": loc.get('host'),
-                        "afinidad": afinidad
-                    })
+            user_ids = list(user_info.keys())
+            chunk_size = 50
             
+            for i in range(0, len(user_ids), chunk_size):
+                chunk = user_ids[i:i + chunk_size]
+                ids_str = ",".join(map(str, chunk))
+                
+                p_page = 1
+                while True:
+                    p_url = f"https://api.intra.42.fr/v2/projects_users?filter[user_id]={ids_str}&filter[cursus]=21&filter[validated]=true&page[size]=100&page[number]={p_page}"
+                    p_res = requests.get(p_url, headers=headers)
+                    if p_res.status_code != 200:
+                        break
+                    
+                    p_data = p_res.json()
+                    if not p_data:
+                        break
+                        
+                    for pu in p_data:
+                        uid = pu['user']['id']
+                        if uid in user_info:
+                            user_info[uid]["projects"].append({
+                                "name": pu["project"]["name"],
+                                "final_mark": pu.get("final_mark"),
+                                "marked_at": pu.get("marked_at")
+                            })
+                            
+                    p_page += 1
+                    time.sleep(0.5)
+
+            # 4. Calcular afinidades
+            resultados = []
+            for uid, info in user_info.items():
+                if not info["projects"]:
+                    continue # Probablemente de piscina o sin proyectos en cursus 21
+                
+                perfil_b = {
+                    "login": info["login"],
+                    "validated_projects": info["projects"]
+                }
+                
+                afinidad = calcular_afinidad(perfil_a, perfil_b)
+                
+                resultados.append({
+                    "login": info["login"],
+                    "afinidad": afinidad["porcentaje_afinidad"],
+                    "puesto": info["puesto"],
+                    "proyectos_en_comun": afinidad["proyectos_en_comun"]
+                })
+
+            # 5. Ordenar y sacar el top 10
+            resultados.sort(key=lambda x: x["afinidad"], reverse=True)
+            top_10_frontend = resultados[:10]
+
             return {
                 "mi_perfil": perfil_a["login"],
                 "campus_usado": campus_id,
-                "resultados_afinidad": resultados
+                "resultados_afinidad": top_10_frontend
             }
-        
+
         return "Fallo al obtener los datos del perfil", 500
-        
+
     return "Fallo al obtener el token de 42", 500
 
 if __name__ == '__main__':
